@@ -35,13 +35,13 @@
     <ClInclude Include="NeuropixThread.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="neuropix-api\AdcPacket.h">
+    <ClInclude Include="neuropix-api\ADCPacket.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
     <ClInclude Include="neuropix-api\BaseConfiguration.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
-    <ClInclude Include="neuropix-api\ConnectionLinkPacket.h">
+    <ClInclude Include="neuropix-api\CsvFile.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
     <ClInclude Include="neuropix-api\dll_import_export.h">
@@ -50,21 +50,33 @@
     <ClInclude Include="neuropix-api\ElectrodePacket.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
-    <ClInclude Include="neuropix-api\hs_fpga_register_def.h">
+    <ClInclude Include="neuropix-api\I2CDeviceAddresses.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
-    <ClInclude Include="neuropix-api\Neuropix_basestation_api.h">
+    <ClInclude Include="neuropix-api\IicDriver.h">
+      <Filter>Source Files\neuropix-api</Filter>
+    </ClInclude>
+    <ClInclude Include="neuropix-api\NeuropixAPI.h">
+      <Filter>Source Files\neuropix-api</Filter>
+    </ClInclude>
+    <ClInclude Include="neuropix-api\NP_ErrorCode.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
     <ClInclude Include="neuropix-api\ShankConfiguration.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
-    <ClInclude Include="neuropix-api\TestConfiguration.h">
+    <ClInclude Include="neuropix-api\ShiftRegister.h">
+      <Filter>Source Files\neuropix-api</Filter>
+    </ClInclude>
+    <ClInclude Include="neuropix-api\SuperBaseConfiguration.h">
+      <Filter>Source Files\neuropix-api</Filter>
+    </ClInclude>
+    <ClInclude Include="neuropix-api\VciInterface.h">
       <Filter>Source Files\neuropix-api</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="resources\libNeuropix_basestation_api_msvc.lib">
+    <Library Include="resources\libNeuropixAPI_msvc_V5_0.lib">
       <Filter>Resource Files</Filter>
     </Library>
   </ItemGroup>

@@ -31,22 +31,10 @@ NeuropixEditor::NeuropixEditor(GenericProcessor* parentNode, NeuropixThread* t, 
 {
 
     thread = t;
-    option = thread->getProbeOption();
     canvas = nullptr;
 
     desiredWidth = 200;
-    tabText = "Neuropix";
-
-    optionComboBox = new ComboBox("Option Combo Box");
-    optionComboBox->setBounds(20,35,100,25);
-    optionComboBox->addListener(this);
-
-    for (int k = 1; k < 5; k++)
-    {
-        optionComboBox->addItem("Option " + String(k),k);
-    }
-    optionComboBox->setSelectedId(option, dontSendNotification);
-    //addAndMakeVisible(optionComboBox);
+    tabText = "Neuropix 3b";
 
     triggerTypeButton = new UtilityButton("INTERNAL", Font("Small Text", 13, Font::plain));
     triggerTypeButton->setRadius(3.0f);
@@ -110,16 +98,7 @@ NeuropixEditor::~NeuropixEditor()
 
 void NeuropixEditor::comboBoxChanged(ComboBox* comboBox)
 {
-    if (comboBox == optionComboBox)
-    {
-        option = comboBox->getSelectedId();
-
-        if (canvas != nullptr)
-            canvas->setOption(option);
-
-        //thread->setProbeOption(option);
-
-    }
+   
 }
 
 void NeuropixEditor::buttonCallback(Button* button)
@@ -194,7 +173,6 @@ Visualizer* NeuropixEditor::createNewCanvas(void)
     GenericProcessor* processor = (GenericProcessor*) getProcessor();
     std::cout << "Got processor." << std::endl;
     canvas = new NeuropixCanvas(processor, thread);
-    canvas->setOption(option);
     std::cout << "Created canvas." << std::endl;
     return canvas;
 }
@@ -213,20 +191,11 @@ NeuropixCanvas::NeuropixCanvas(GenericProcessor* p, NeuropixThread* thread)
 
     resized();
     update();
-    setOption(thread->getProbeOption());
 }
 
 NeuropixCanvas::~NeuropixCanvas()
 {
 
-}
-
-void NeuropixCanvas::setOption(int opt)
-{
-    option = opt;
-
-    if (neuropixInterface != 0)
-        neuropixInterface->setOption(option);
 }
 
 void NeuropixCanvas::paint(Graphics& g)
@@ -321,56 +290,6 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     zoomOffset = 0;
     dragZoneWidth = 10;
 
-    option1and2refs.add(37);
-    option1and2refs.add(76);
-    option1and2refs.add(113);
-    option1and2refs.add(152);
-    option1and2refs.add(189);
-    option1and2refs.add(228);
-    option1and2refs.add(265);
-
-    option4refs = option1and2refs;
-
-    option1and2refs.add(304);
-    option1and2refs.add(341);
-    option1and2refs.add(380);
-
-    option3refs = option1and2refs;
-
-    option3refs.add(421);
-    option3refs.add(460);
-    option3refs.add(497);
-    option3refs.add(536);
-    option3refs.add(573);
-    option3refs.add(612);
-    option3refs.add(649);
-    option3refs.add(688);
-    option3refs.add(725);
-    option3refs.add(805);
-    option3refs.add(844);
-    option3refs.add(881);
-    option3refs.add(920);
-    option3refs.add(957);
-
-    option4refs.add(313);
-    option4refs.add(352);
-    option4refs.add(389);
-    option4refs.add(428);
-    option4refs.add(465);
-    option4refs.add(504);
-    option4refs.add(541);
-    option4refs.add(589);
-    option4refs.add(628);
-    option4refs.add(665);
-    option4refs.add(704);
-    option4refs.add(741);
-    option4refs.add(780);
-    option4refs.add(817);
-    option4refs.add(865);
-    option4refs.add(904);
-    option4refs.add(941);
-
-
     apGainComboBox = new ComboBox("apGainComboBox");
     apGainComboBox->setBounds(400, 150, 65, 22);
     apGainComboBox->addListener(this);
@@ -387,7 +306,7 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     gains.add(1000);
     gains.add(1500);
     gains.add(2000);
-    gains.add(2500);
+    gains.add(3000);
 
     for (int i = 0; i < 8; i++)
     {
@@ -402,22 +321,18 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     referenceComboBox->setBounds(400, 250, 65, 22);
     referenceComboBox->addListener(this);
     referenceComboBox->addItem("Ext", 1);
+	referenceComboBox->addItem("Tip", 2);
+	referenceComboBox->addItem("192", 3);
+	referenceComboBox->addItem("576", 3);
+	referenceComboBox->addItem("959", 3);
     referenceComboBox->setSelectedId(1, dontSendNotification);
 
     filterComboBox = new ComboBox("FilterComboBox");
     filterComboBox->setBounds(400, 300, 75, 22);
     filterComboBox->addListener(this);
-    filterComboBox->addItem("300 Hz", 1);
-    filterComboBox->addItem("500 Hz", 2);
-    filterComboBox->addItem("1 kHz", 4);
+    filterComboBox->addItem("ON", 1);
+    filterComboBox->addItem("OFF", 2);
     filterComboBox->setSelectedId(1, dontSendNotification);
-
-    activityViewComboBox = new ComboBox("ActivityViewComboBox");
-    activityViewComboBox->setBounds(550, 350, 75, 22);
-    activityViewComboBox->addListener(this);
-    activityViewComboBox->addItem("Spikes", 1);
-    activityViewComboBox->addItem("LFP", 2);
-    activityViewComboBox->setSelectedId(1, dontSendNotification);
 
     enableButton = new UtilityButton("ENABLE", Font("Small Text", 13, Font::plain));
     enableButton->setRadius(3.0f);
@@ -466,12 +381,6 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     referenceViewButton->setBounds(480,252,45,18);
     referenceViewButton->addListener(this);
     referenceViewButton->setTooltip("View reference of each channel");
-
-    activityViewButton = new UtilityButton("VIEW", Font("Small Text", 12, Font::plain));
-    activityViewButton->setRadius(3.0f);
-    activityViewButton->setBounds(640, 353, 45, 18);
-    activityViewButton->addListener(this);
-    activityViewButton->setTooltip("View activity for each channel");
 
     annotationButton = new UtilityButton("ADD", Font("Small Text", 12, Font::plain));
     annotationButton->setRadius(3.0f);
@@ -541,12 +450,6 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     referenceLabel->setColour(Label::textColourId, Colours::grey);
     addAndMakeVisible(referenceLabel);
 
-    activityViewLabel = new Label("VISUALIZER", "VISUALIZER");
-    activityViewLabel->setFont(Font("Small Text", 13, Font::plain));
-    activityViewLabel->setBounds(545, 325, 100, 20);
-    activityViewLabel->setColour(Label::textColourId, Colours::grey);
-    //addAndMakeVisible(activityViewLabel);
-
     filterLabel = new Label("FILTER", "FILTER CUT (GLOBAL)");
     filterLabel->setFont(Font("Small Text", 13, Font::plain));
     filterLabel->setBounds(396,280,200,20);
@@ -584,8 +487,6 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     shankPath.lineTo(27+10, 514);
     shankPath.lineTo(27+10, 28);
     shankPath.closeSubPath();
-
-    //setOption(1);
 
     colorSelector = new ColorSelector(this);
     colorSelector->setBounds(400, 450, 250, 20);
@@ -640,10 +541,6 @@ void NeuropixInterface::resetParameters()
     if (!wasReset)
     {
         std::cout << "Resetting parameters... " << std::endl;
-        //thread->setAllApGains(3);
-        //thread->setAllLfpGains(3);
-        //thread->setAllReferences(0);
-        //thread->setFilter(0);
 
         lfpGainComboBox->setSelectedId(3, dontSendNotification);
         apGainComboBox->setSelectedId(4, dontSendNotification);
@@ -668,21 +565,13 @@ void NeuropixInterface::labelTextChanged(Label* label)
 void NeuropixInterface::comboBoxChanged(ComboBox* comboBox)
 {
 
-    if (comboBox == activityViewComboBox)
-    {
-        if (visualizationMode > 3)
-            visualizationMode = comboBox->getSelectedId() + 3;
-
-        return;
-    }
-
     if (!editor->acquisitionIsActive)
     {
         if (comboBox == apGainComboBox)
         {
             int gainSetting = comboBox->getSelectedId() - 1;
 
-            thread->setAllApGains(gainSetting);
+            //thread->setAllApGains(gainSetting);
 
             for (int i = 0; i < 966; i++)
             {
@@ -701,7 +590,7 @@ void NeuropixInterface::comboBoxChanged(ComboBox* comboBox)
         {
             int gainSetting = comboBox->getSelectedId() - 1;
 
-            thread->setAllLfpGains(gainSetting);
+            //thread->setAllLfpGains(gainSetting);
 
             for (int i = 0; i < 966; i++)
             {
@@ -730,7 +619,7 @@ void NeuropixInterface::comboBoxChanged(ComboBox* comboBox)
                 refChannel = refSetting.getIntValue();
             }
 
-            thread->setAllReferences(getChannelForElectrode(refChannel), getConnectionForChannel(refChannel));
+           // thread->setAllReferences(getChannelForElectrode(refChannel), getConnectionForChannel(refChannel));
 
             for (int i = 0; i < 966; i++)
             {
@@ -806,14 +695,6 @@ void NeuropixInterface::buttonClicked(Button* button)
         visualizationMode = 3;
         stopTimer();
         repaint();
-    } else if (button == activityViewButton)
-    {
-        if (activityViewComboBox->getSelectedId() == 1)
-            visualizationMode = 4; // spikes
-        else
-            visualizationMode = 5; // lfp
-
-        startTimer(1000);
     } else if (button == enableButton)
     {
         if (!editor->acquisitionIsActive)
@@ -836,18 +717,8 @@ void NeuropixInterface::buttonClicked(Button* button)
                         thread->selectElectrode(getChannelForElectrode(i), getConnectionForChannel(i), false);
                         maxChan = i;
 
-                        int startPoint;
-                        int jump;
-
-                        if (option == 3)
-                        {
-                            startPoint = -768;
-                            jump = 384;
-                        }
-                        else {
-                            startPoint = -828;
-                            jump = 276;
-                        }
+                        int startPoint = -768;
+                        int jump = 384;
 
                         for (int j = startPoint; j <= -startPoint; j += jump)
                         {
@@ -874,9 +745,6 @@ void NeuropixInterface::buttonClicked(Button* button)
             }
 
             thread->selectElectrode(getChannelForElectrode(maxChan), getConnectionForChannel(maxChan), true);
-
-            updateAvailableRefs();
-
             repaint();
         }
 
@@ -1014,120 +882,6 @@ Array<int> NeuropixInterface::getSelectedChannels()
     }
 
     return a;
-}
-
-void NeuropixInterface::setOption(int o)
-{
-    option = o;
-
-    for (int i = 0; i < 276; i++)
-    {
-        channelStatus.set(i, 1);
-    }
-
-    for (int i = 276; i < 384; i++)
-    {
-        if (option != 4)
-            channelStatus.set(i, 1);
-        else
-            channelStatus.set(i, 0);
-    }
-
-    for (int i = 384; i < 960; i++)
-    {
-        if (option < 3)
-        {
-            channelStatus.set(i, -1);
-        } else {
-            channelStatus.set(i, 0);
-        }
-    }
-
-    for (int i = 960; i < 966; i++)
-    {
-        if (option == 4)
-        {
-            channelStatus.set(i, 0);
-        } else {
-            channelStatus.set(i, -1);
-        }
-    }
-
-    int totalRefs;
-
-    if (option < 3)
-    {
-        refs = option1and2refs;
-        totalRefs = 10;
-    }
-    else if (option == 3)
-    {
-        refs = option3refs;
-        totalRefs = 10;
-    }
-    else
-    {
-        refs = option4refs;
-        totalRefs = 7;
-    }
-
-    for (int i = 0; i < refs.size(); i++)
-    {
-        if (i < totalRefs)
-            channelStatus.set(refs[i]-1, -2);
-        else
-            channelStatus.set(refs[i]-1, -3);
-    }
-
-    if (option < 3)
-    {
-        enableButton->setEnabledState(false);
-    } else {
-        enableButton->setEnabledState(true);
-    }
-
-    updateAvailableRefs();
-    updateInfoString();
-
-    repaint();
-}
-
-void NeuropixInterface::updateAvailableRefs()
-{
-
-    String currentRef = referenceComboBox->getText();
-    std::cout << "Updating refs, Current reference = " << currentRef << std::endl;
-
-    referenceComboBox->clear(NotificationType::dontSendNotification);
-
-    referenceComboBox->addItem("Ext", 1);
-
-    int newIndex = 1;
-    bool foundMatch = false;
-
-    for (int i = 0; i < refs.size(); i++)
-    {
-        if (channelStatus[refs[i] - 1] == -2)
-        {
-            String newString = String(refs[i]);
-
-            if (newString.equalsIgnoreCase(currentRef))
-            {
-                newIndex = i + 2;
-                foundMatch = true;
-            }
-                
-
-            referenceComboBox->addItem(newString, i + 2);
-        }
-            
-    }
-
-    referenceComboBox->setSelectedId(newIndex, dontSendNotification);
-
-    if (!foundMatch && !currentRef.equalsIgnoreCase("Ext")) // reset to Ext reference
-        thread->setAllReferences(0, 0);
-
 }
 
 void NeuropixInterface::mouseMove(const MouseEvent& event)
@@ -1930,55 +1684,25 @@ void NeuropixInterface::timerCallback()
 int NeuropixInterface::getChannelForElectrode(int ch)
 {
     // returns actual mapped channel for individual electrode
-    if (option < 3)
-    {
-        if (ch < 383)
-            return ch; // channels are linear
-        else
-            return -1; // channel doesn't exist on probe
-
-    } else if (option == 3)
-    {
-        if (ch < 384)
-            return ch;
-        else if (ch >= 384 && ch < 768)
-            return ch - 384;
-        else
-            return ch - 384 * 2;
-    } else if (option == 4)
-    {
-        if (ch < 276)
-            return ch;
-        else if (ch >= 276 && ch < 552)
-            return ch - 276;
-        else if (ch >= 552 && ch < 828)
-            return ch - 276 * 2;
-        else
-            return ch - 276 * 3;
-    }
+    if (ch < 384)
+        return ch;
+    else if (ch >= 384 && ch < 768)
+        return ch - 384;
+    else
+        return ch - 384 * 2;
+    
 }
 
 int NeuropixInterface::getConnectionForChannel(int ch)
 {
-    if (option == 3)
-    {
-        if (ch < 384)
-            return 0;
-        else if (ch >= 384 && ch < 768)
-            return 1;
-        else
-            return 2;
-    } else if (option == 4)
-    {
-        if (ch < 276)
-            return 0;
-        else if (ch >= 276 && ch < 552)
-            return 1;
-        else if (ch >= 552 && ch < 828)
-            return 2;
-        else
-            return 3;
-    }
+
+    if (ch < 384)
+        return 0;
+    else if (ch >= 384 && ch < 768)
+        return 1;
+    else
+        return 2;
+  
 }
 
 void NeuropixInterface::saveParameters(XmlElement* xml)

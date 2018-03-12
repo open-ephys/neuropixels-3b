@@ -24,20 +24,24 @@
     <ClCompile Include="OpenEphysLib.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="neuropix-api\AdcPacket.h" />
+    <ClInclude Include="neuropix-api\ADCPacket.h" />
     <ClInclude Include="neuropix-api\BaseConfiguration.h" />
-    <ClInclude Include="neuropix-api\ConnectionLinkPacket.h" />
+    <ClInclude Include="neuropix-api\CsvFile.h" />
     <ClInclude Include="neuropix-api\dll_import_export.h" />
     <ClInclude Include="neuropix-api\ElectrodePacket.h" />
-    <ClInclude Include="neuropix-api\hs_fpga_register_def.h" />
-    <ClInclude Include="neuropix-api\Neuropix_basestation_api.h" />
+    <ClInclude Include="neuropix-api\I2CDeviceAddresses.h" />
+    <ClInclude Include="neuropix-api\IicDriver.h" />
+    <ClInclude Include="neuropix-api\NeuropixAPI.h" />
+    <ClInclude Include="neuropix-api\NP_ErrorCode.h" />
     <ClInclude Include="neuropix-api\ShankConfiguration.h" />
-    <ClInclude Include="neuropix-api\TestConfiguration.h" />
+    <ClInclude Include="neuropix-api\ShiftRegister.h" />
+    <ClInclude Include="neuropix-api\SuperBaseConfiguration.h" />
+    <ClInclude Include="neuropix-api\VciInterface.h" />
     <ClInclude Include="NeuropixEditor.h" />
     <ClInclude Include="NeuropixThread.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="resources\libNeuropix_basestation_api_msvc.lib" />
+    <Library Include="resources\libNeuropixAPI_msvc_V5_0.lib" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{136F1FC3-BF86-4F1E-A5A0-1BB533410F57}</ProjectGuid>

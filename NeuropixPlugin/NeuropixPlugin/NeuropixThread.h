@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "neuropix-api/Neuropix_basestation_api.h"
+#include "neuropix-api/NeuropixAPI.h"
 #include "neuropix-api/ElectrodePacket.h"
 
 class SourceNode;
@@ -38,7 +38,7 @@ namespace Neuropix {
 
 	/**
 
-	  Communicates with imec Neuropix probes.
+	  Communicates with imec Neuropixels probes.
 
 	  @see DataThread, SourceNode
 
@@ -97,22 +97,13 @@ namespace Neuropix {
 		void selectElectrode(int chNum, int connection, bool transmit);
 
 		/** Selects which reference is used for each channel. */
-		void setReference(int chNum, int refSetting);
-
-		/** Selects which reference is used for each channel. */
 		void setAllReferences(int refSetting, int bankForReference);
 
 		/** Sets the gain for each channel. */
-		void setGain(int ch, int apGain, int lfpGain);
-
-		/** Sets the AP gains for all channels. **/
-		void setAllApGains(int apGain);
-
-		/** Sets the LFP gains for all channels. **/
-		void setAllLfpGains(int lfpGain);
+		void setAllGains(unsigned char apGain, unsigned char lfpGain);
 
 		/** Sets the filter for all channels. */
-		void setFilter(int filter);
+		void setFilter(bool filterState);
 
 	    /** Toggles between internal and external triggering. */
 	    void setTriggerMode(bool trigger);
@@ -134,9 +125,6 @@ namespace Neuropix {
 
 		/** Loads calibration settings from CSV. */
 		void calibrateFromCsv(File path);
-
-		/** Retrieve probe option. */
-		int getProbeOption();
 
 		/** Starts data acquisition after a certain time.*/
 		void timerCallback();
@@ -166,18 +154,12 @@ namespace Neuropix {
 		bool sendAp;
 		bool sendLfp;
 
-		Neuropix_basestation_api neuropix;
+		NeuropixAPI neuropix;
 		
 		long int counter;
 		int recordingNumber;
 
 		CriticalSection displayMutex;
-
-		VersionNumber hw_version;
-		unsigned char bs_version;
-		unsigned char bs_revision;
-		VersionNumber vn;
-		AsicID asicId;
 
 		Array<int> gains;
 		Array<int> apGains;
@@ -193,10 +175,11 @@ namespace Neuropix {
 		int64 timestampLfp;
 		uint64 eventCode;
 		int maxCounter;
-
-		uint8 option;
 		int numRefs;
 		int totalChans;
+
+		unsigned char slotID; // basestation / PXIe slot number
+		unsigned char port; // probe number (0-3 for each slot)
 
 	};
 

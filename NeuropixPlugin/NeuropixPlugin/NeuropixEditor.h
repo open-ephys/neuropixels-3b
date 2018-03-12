@@ -62,8 +62,7 @@ namespace Neuropix {
 		ScopedPointer<UtilityButton> apButton;
 		ScopedPointer<UtilityButton> lfpButton;
 
-	    ScopedPointer<ComboBox> optionComboBox;
-	    ScopedPointer<UtilityButton> triggerTypeButton;
+		ScopedPointer<UtilityButton> triggerTypeButton;
 	    ScopedPointer<Label> triggerTypeLabel;
 		ScopedPointer<UtilityButton> restartButton;
 		ScopedPointer<Label> restartLabel;
@@ -75,7 +74,6 @@ namespace Neuropix {
 		bool autoRestart;
 		bool sendAp;
 		bool sendLfp;
-		int option;
 
 	    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NeuropixEditor);
 
@@ -97,8 +95,6 @@ namespace Neuropix {
 		void refreshState();
 		void update();
 
-		void setOption(int);
-
 		void setParameter(int, float);
 	    void setParameter(int, int, int, float);
 	    void buttonClicked(Button* button);
@@ -107,7 +103,6 @@ namespace Neuropix {
 		void loadVisualizerParameters(XmlElement* xml);
 
 		void resized();
-
 
 		SourceNode* processor;
 		ScopedPointer<Viewport> neuropixViewport;
@@ -122,8 +117,6 @@ namespace Neuropix {
 	public:
 		NeuropixInterface(NeuropixThread*, NeuropixEditor*);
 		~NeuropixInterface();
-
-		void setOption(int);
 
 		void paint(Graphics& g);
 
@@ -147,8 +140,7 @@ namespace Neuropix {
 		void timerCallback();
 
 	private:
-		int option;
-
+	
 		NeuropixThread* thread;
 		NeuropixEditor* editor;
 		DataBuffer* inputBuffer;
@@ -158,7 +150,6 @@ namespace Neuropix {
 		ScopedPointer<ComboBox> apGainComboBox;
 		ScopedPointer<ComboBox> referenceComboBox;
 		ScopedPointer<ComboBox> filterComboBox;
-		ScopedPointer<ComboBox> activityViewComboBox;
 
 		ScopedPointer<UtilityButton> enableButton;
 		ScopedPointer<UtilityButton> selectAllButton;
@@ -169,7 +160,6 @@ namespace Neuropix {
 		ScopedPointer<Label> referenceLabel;
 		ScopedPointer<Label> filterLabel;
 		ScopedPointer<Label> outputLabel;
-		ScopedPointer<Label> activityViewLabel;
 		ScopedPointer<Label> annotationLabelLabel;
 		ScopedPointer<Label> annotationLabel;
 
@@ -177,7 +167,6 @@ namespace Neuropix {
 		ScopedPointer<UtilityButton> lfpGainViewButton;
 		ScopedPointer<UtilityButton> apGainViewButton;
 		ScopedPointer<UtilityButton> referenceViewButton;
-		ScopedPointer<UtilityButton> activityViewButton;
 		ScopedPointer<UtilityButton> outputOnButton;
 		ScopedPointer<UtilityButton> outputOffButton;
 		ScopedPointer<UtilityButton> annotationButton;
@@ -194,13 +183,7 @@ namespace Neuropix {
 		Array<int> channelOutput;
 		Array<int> channelSelectionState;
 
-		Array<int> option1and2refs;
-		Array<int> option3refs;
-		Array<int> option4refs;
-
 		Array<Colour> channelColours;
-
-		Array<int> refs;
 
 		bool isOverZoomRegion;
 		bool isOverUpperBorder;
@@ -236,8 +219,6 @@ namespace Neuropix {
 
 		void drawLegend(Graphics& g);
 		void drawAnnotations(Graphics& g);
-
-		void updateAvailableRefs();
 
 		Array<Annotation> annotations;
 
