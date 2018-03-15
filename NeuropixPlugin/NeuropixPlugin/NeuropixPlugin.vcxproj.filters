@@ -76,7 +76,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="resources\libNeuropixAPI_msvc_V5_0.lib">
+    <Library Include="resources\libNeuropixAPI_msvc_V5_1.lib">
       <Filter>Resource Files</Filter>
     </Library>
   </ItemGroup>

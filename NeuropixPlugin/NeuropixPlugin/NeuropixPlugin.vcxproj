@@ -41,7 +41,7 @@
     <ClInclude Include="NeuropixThread.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="resources\libNeuropixAPI_msvc_V5_0.lib" />
+    <Library Include="resources\libNeuropixAPI_msvc_V5_1.lib" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{136F1FC3-BF86-4F1E-A5A0-1BB533410F57}</ProjectGuid>
