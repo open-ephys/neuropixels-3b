@@ -178,8 +178,10 @@ namespace Neuropix {
 		int numRefs;
 		int totalChans;
 
+		ElectrodePacket packetBuffer[250];
+
 		unsigned char slotID; // basestation / PXIe slot number
-		unsigned char port; // probe number (0-3 for each slot)
+		signed char port; // probe number (0-3 for each slot)
 
 	};
 

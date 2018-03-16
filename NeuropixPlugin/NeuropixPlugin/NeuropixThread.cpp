@@ -47,8 +47,8 @@ NeuropixThread::NeuropixThread(SourceNode* sn) : DataThread(sn), baseStationAvai
 
     for (int i = 0; i < 384; i++)
     {
-        lfpGains.add(0);
-        apGains.add(0);
+        lfpGains.add(0); // default setting = 50x
+        apGains.add(4); // default setting = 1000x
         channelMap.add(i);
         outputOn.add(true);
     }
@@ -60,7 +60,7 @@ NeuropixThread::NeuropixThread(SourceNode* sn) : DataThread(sn), baseStationAvai
     gains.add(1000);
     gains.add(1500);
     gains.add(2000);
-    gains.add(2500);
+    gains.add(3000);
 
     refs.add(0);
     refs.add(37);
@@ -101,22 +101,31 @@ void NeuropixThread::openConnection()
 	NP_ErrorCode errorCode = neuropix.openBS(ip_address); // establishes a data connection with the basestation
 
 	if (errorCode == SUCCESS)
-    {
-        std::cout << "Basestation open success!" << std::endl;
-    }
-    else {
-        CoreServices::sendStatusMessage("Failure with error code " + String(errorCode));
-        std::cout << "Failure with error code " << String(errorCode) << std::endl;
-        baseStationAvailable = false;
-        return;
-    }
+	{
+		std::cout << "Basestation open success!" << std::endl;
+	}
+	else {
+		CoreServices::sendStatusMessage("Failure with error code " + String(errorCode));
+		std::cout << "Failure with error code " << String(errorCode) << std::endl;
+		baseStationAvailable = false;
+		return;
+	}
 
-    baseStationAvailable = true;
-    internalTrigger = true;
-    sendLfp = true;
-    sendAp = true;
-    recordToNpx = false;
-    recordingNumber = 0;
+	baseStationAvailable = true;
+	internalTrigger = true;
+	sendLfp = true;
+	sendAp = true;
+	recordToNpx = false;
+	recordingNumber = 0;
+
+	//char * pn;
+	uint64_t sn;
+
+	//neuropix.readBSCPN(slotID, pn);
+	neuropix.readBSCSN(slotID, sn);
+
+	//std::cout << "Basestation part number: " << pn << std::endl;
+	std::cout << "Basestation serial number: " << sn << std::endl;
 
 	// open the probe
 	// - enables the power supply on the cable to the headstage
@@ -124,6 +133,14 @@ void NeuropixThread::openConnection()
 	// - enables heartbeat signal to the HS
 	// - sets the BS FPGA for this port into electrode mode
 	// - enables data zeroing on BS FPGA
+	/*for (unsigned char sID = 0; sID < 10; sID++)
+	{
+		for (signed char pID = 0; pID < 4; pID++)
+		{
+			errorCode = neuropix.openProbe(sID, pID); // establishes a data connection with the basestation
+			std::cout << int(sID) << ":" << int(pID) << " - " << errorCode << std::endl;
+		}
+	}*/
 	errorCode = neuropix.openProbe(slotID, port); // establishes a data connection with the basestation
 
 	if (errorCode == SUCCESS)
@@ -141,6 +158,8 @@ void NeuropixThread::openConnection()
 
 	// Get probe info
 	errorCode = neuropix.readId(slotID, port, probeId);
+
+	std::cout << "Probe ID number: " << probeId << std::endl;
 
 	// initialize probe
 	// default settings:
@@ -189,7 +208,7 @@ bool NeuropixThread::startAcquisition()
     eventCode = 0;
     maxCounter = 0;
     
-    startTimer(500);
+    startTimer(100);
    
     return true;
 }
@@ -199,9 +218,28 @@ void NeuropixThread::timerCallback()
 
     stopTimer();
 
+	NP_ErrorCode errorCode;
+
+	errorCode = neuropix.stopInfiniteStream(slotID);
+
+	std::cout << "Stop streaming error code: " << errorCode << std::endl;
+
+	errorCode = neuropix.setTriggerSource(slotID, 0); // software trigger
+
+	std::cout << "Trigger source error code: " << errorCode << std::endl;
+
     // start data stream
-    neuropix.arm(slotID);
-	neuropix.setSWTrigger(slotID);
+    errorCode = neuropix.arm(slotID);
+
+	std::cout << "Arm error code: " << errorCode << std::endl;
+
+	errorCode = neuropix.startInfiniteStream(slotID);
+
+	std::cout << "Streaming error code: " << errorCode << std::endl;
+
+	errorCode = neuropix.setSWTrigger(slotID);
+
+	std::cout << "SW trigger error code: " << errorCode << std::endl;
 
     startThread();
 
@@ -211,6 +249,10 @@ void NeuropixThread::timerCallback()
 /** Stops data transfer.*/
 bool NeuropixThread::stopAcquisition()
 {
+
+	NP_ErrorCode errorCode;
+
+	errorCode = neuropix.stopInfiniteStream(slotID);
 
     if (isThreadRunning())
     {
@@ -446,43 +488,52 @@ void NeuropixThread::calibrateFromCsv(File directory)
 bool NeuropixThread::updateBuffer()
 {
 
-    ElectrodePacket packet;
+    //ElectrodePacket* packet;
 	unsigned int actualNumPackets;
 	unsigned int requestedNumPackets = 250;
 
-	NP_ErrorCode errorCode = neuropix.readElectrodeData(slotID, port, &packet, actualNumPackets, requestedNumPackets);
+	//std::cout << "Attempting data read. " << std::endl;
+	NP_ErrorCode errorCode = neuropix.readElectrodeData(slotID, port, packetBuffer, actualNumPackets, requestedNumPackets);
+	//std::cout << "Data read. " << std::endl;
 
     if (errorCode == SUCCESS)
     {
+
+		//std::cout << "Got data. " << std::endl;
         float data[384];
         float data2[384];
 
-        for (int i = 0; i < 12; i++)
-        {
-			eventCode = (uint64) packet.aux[i]; // AUX_IO<0:13>
+		for (int packetNum = 0; packetNum < actualNumPackets; packetNum++)
+		{
+			for (int i = 0; i < 12; i++)
+			{
+				eventCode = (uint64)packetBuffer[packetNum].aux[i]; // AUX_IO<0:13>
+				//std::cout << "Read event data. " << std::endl;
 
-            for (int j = 0; j < 384; j++)
-            {
-                data[j] = (packet.apData[i][j] - 0.6) / gains[apGains[j]] * -1000000.0f; // convert to microvolts
+				for (int j = 0; j < 384; j++)
+				{
+					data[j] = packetBuffer[packetNum].apData[i][j] * 1.2 / 1024 * 1000.0f; //- 0.6) / gains[apGains[j]]; // *-1000000.0f; // convert to microvolts
 
-                if (i == 0 && sendLfp)
-                    data2[j] = (packet.lfpData[j] - 0.6) / gains[lfpGains[j]] * -1000000.0f; // convert to microvolts
-            }
+					if (i == 0 && sendLfp)
+						data2[j] = packetBuffer[packetNum].lfpData[j] * 1.2 / 1024 * 1000.0f; // -0.6) / gains[lfpGains[j]]; // *-1000000.0f; // convert to microvolts
+				}
 
-            sourceBuffers[0]->addToBuffer(data, &timestampAp, &eventCode, 1);
-            timestampAp += 1;
-        }
+				sourceBuffers[0]->addToBuffer(data, &timestampAp, &eventCode, 1);
+				timestampAp += 1;
+				//std::cout << "Added AP data to buffer. " << std::endl;
+			}
 
-        eventCode = 0;
+			eventCode = 0;
 
-		sourceBuffers[1]->addToBuffer(data2, &timestampLfp, &eventCode, 1);
-		timestampLfp += 1;
+			sourceBuffers[1]->addToBuffer(data2, &timestampLfp, &eventCode, 1);
+			timestampLfp += 1;
+		}
 
 		//std::cout << "READ SUCCESS!" << std::endl;  
         
     }
     else {
-		std::cout << "ERROR CODE: " << errorCode << std::endl;
+		//std::cout << "ERROR CODE: " << errorCode << std::endl;
     }
 
 	unsigned char fifoFillPercentage;
