@@ -63,16 +63,10 @@ NeuropixThread::NeuropixThread(SourceNode* sn) : DataThread(sn), baseStationAvai
     gains.add(3000);
 
     refs.add(0);
-    refs.add(37);
-    refs.add(76);
-    refs.add(113);
-    refs.add(152);
-    refs.add(189);
-    refs.add(228);
-    refs.add(265);
-    refs.add(304);
-    refs.add(341);
-    refs.add(380);
+    refs.add(1);
+    refs.add(192);
+    refs.add(576);
+    refs.add(960);
 
     counter = 0;
     timestampAp = 0;
@@ -154,8 +148,6 @@ void NeuropixThread::openConnection()
 		return;
 	}
 
-	uint64_t probeId;
-
 	// Get probe info
 	errorCode = neuropix.readId(slotID, port, probeId);
 
@@ -171,6 +163,14 @@ void NeuropixThread::openConnection()
 	// - ADC calibration/gain settings are NOT overwritten
 	// - heartbeat signal is turned off
 	errorCode = neuropix.init(slotID, port);
+
+	errorCode = neuropix.setTriggerSource(slotID, 0); // software trigger
+
+	calibrateFromCsv(); // run the gain calibration
+
+	setAllGains(5, 5); // 500x, 250x
+
+	std::cout << "Trigger source error code: " << errorCode << std::endl;
 
 }
 
@@ -222,12 +222,6 @@ void NeuropixThread::timerCallback()
 
 	errorCode = neuropix.stopInfiniteStream(slotID);
 
-	std::cout << "Stop streaming error code: " << errorCode << std::endl;
-
-	errorCode = neuropix.setTriggerSource(slotID, 0); // software trigger
-
-	std::cout << "Trigger source error code: " << errorCode << std::endl;
-
     // start data stream
     errorCode = neuropix.arm(slotID);
 
@@ -250,14 +244,12 @@ void NeuropixThread::timerCallback()
 bool NeuropixThread::stopAcquisition()
 {
 
-	NP_ErrorCode errorCode;
-
-	errorCode = neuropix.stopInfiniteStream(slotID);
-
     if (isThreadRunning())
     {
         signalThreadShouldExit();
     }
+
+	
 
     return true;
 }
@@ -399,7 +391,7 @@ void NeuropixThread::setAllGains(unsigned char apGain, unsigned char lfpGain)
 
 	neuropix.writeProbeConfiguration(slotID, port, false);
 
-    std::cout << "Set gains to " << apGain << " and " << lfpGain << "; error code = " << ec << std::endl;
+    std::cout << "Set gains to " << gains[int(apGain)] << " and " << gains[int(lfpGain)] << "; error code = " << ec << std::endl;
    
 }
 
@@ -462,7 +454,7 @@ void NeuropixThread::calibrateGains()
 
 }
 
-void NeuropixThread::calibrateFromCsv(File directory)
+void NeuropixThread::calibrateFromCsv()
 {
 
 	//Read from csv and apply to API and read from API
@@ -473,22 +465,43 @@ void NeuropixThread::calibrateFromCsv(File directory)
 	//File slopeCsv = directory.getChildFile("Slope_calibration.csv");
 	//File gainCsv = directory.getChildFile("Gain_calibration.csv");
 
-	//std::cout << File::getCurrentWorkingDirectory().getFullPathName() << std::endl;
+	File baseDirectory = File::getCurrentWorkingDirectory().getFullPathName();
+	File calibrationDirectory = baseDirectory.getChildFile("CalibrationInfo");
+	File probeDirectory = calibrationDirectory.getChildFile(String(probeId));
+	String adcFile = probeDirectory.getChildFile(String(probeId) + "_ADCCalibration.csv").getFullPathName();
+	String gainFile = probeDirectory.getChildFile(String(probeId) + "_gainCalValues.csv").getFullPathName();
 
-	const char * filenameADC;
 
-	neuropix.setADCCalibration(slotID, port, filenameADC);
+    std::cout << adcFile << std::endl;
+	std::cout << gainFile << std::endl;
+
+	NP_ErrorCode errorCode;
+
+	errorCode = neuropix.setADCCalibration(slotID, port, adcFile.toRawUTF8());
+
+	if (errorCode == SUCCESS)
+	{
+		std::cout << "Successful ADC calibration" << std::endl;
+	}
+	else {
+		std::cout << "Problem with ADC calibration, error code = " << errorCode << std::endl;
+	}
 	
-	const char * filenameGain;
+	errorCode = neuropix.setGainCalibration(slotID, port, gainFile.toRawUTF8());
 
-	neuropix.setGainCalibration(slotID, port, filenameGain);
+	if (errorCode == SUCCESS)
+	{
+		std::cout << "Successful gain calibration" << std::endl;
+	}
+	else {
+		std::cout << "Problem with gain calibration, error code = " << errorCode << std::endl;
+	}
 
 }
 
 bool NeuropixThread::updateBuffer()
 {
 
-    //ElectrodePacket* packet;
 	unsigned int actualNumPackets;
 	unsigned int requestedNumPackets = 250;
 
@@ -538,6 +551,11 @@ bool NeuropixThread::updateBuffer()
 
 	unsigned char fifoFillPercentage;
 	errorCode = neuropix.fifoFilling(slotID, port, 0, fifoFillPercentage);
+
+	if (fifoFillPercentage > 10)
+	{
+		std::cout << "Fifo warning: " << int(fifoFillPercentage) << "% full" << std::endl;
+	}
 
 	bool overflow;
 	errorCode = neuropix.hadOverflow(overflow);

@@ -124,7 +124,7 @@ namespace Neuropix {
 		void calibrateGains();
 
 		/** Loads calibration settings from CSV. */
-		void calibrateFromCsv(File path);
+		void calibrateFromCsv();
 
 		/** Starts data acquisition after a certain time.*/
 		void timerCallback();
@@ -167,6 +167,8 @@ namespace Neuropix {
 		Array<int> channelMap;
 		Array<bool> outputOn;
 		Array<int> refs;
+
+		uint64_t probeId;
 
 		void openConnection();
 		void closeConnection();

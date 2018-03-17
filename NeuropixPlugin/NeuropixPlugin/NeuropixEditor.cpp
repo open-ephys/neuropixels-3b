@@ -421,8 +421,8 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     addAndMakeVisible(apGainViewButton);
     addAndMakeVisible(referenceViewButton);
     addAndMakeVisible(annotationButton);
-    addAndMakeVisible(calibrationButton);
-    addAndMakeVisible(calibrationButton2);
+    //addAndMakeVisible(calibrationButton);
+    //addAndMakeVisible(calibrationButton2);
 	addAndMakeVisible(calibrationButton3);
 
     
@@ -861,7 +861,7 @@ void NeuropixInterface::buttonClicked(Button* button)
 
 			// fileNameLabel->setText(fileToRead.getFileName(),false);
 			// }
-			thread->calibrateFromCsv(File::getCurrentWorkingDirectory());
+			thread->calibrateFromCsv();
 			calibrationButton3->setToggleState(true, dontSendNotification);
 			std::cout << "Done." << std::endl;
 		}
