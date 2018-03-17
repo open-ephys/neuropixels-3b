@@ -168,7 +168,7 @@ void NeuropixThread::openConnection()
 
 	calibrateFromCsv(); // run the gain calibration
 
-	setAllGains(5, 5); // 500x, 250x
+	setAllGains(3, 2); // 500x, 250x
 
 	std::cout << "Trigger source error code: " << errorCode << std::endl;
 
