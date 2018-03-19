@@ -170,6 +170,18 @@ void NeuropixThread::openConnection()
 
 	setAllGains(3, 2); // 500x, 250x
 
+	for (int i = 0; i < 384; i++) // enable electrodes
+	{
+		if (i != 191)
+		{
+			selectElectrode(i, 0, true);
+		}
+	}
+
+	setAllReferences(0, 0);
+
+	neuropix.writeProbeConfiguration(slotID, port, false);
+
 	std::cout << "Trigger source error code: " << errorCode << std::endl;
 
 }
