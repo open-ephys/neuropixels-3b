@@ -323,8 +323,8 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     referenceComboBox->addItem("Ext", 1);
 	referenceComboBox->addItem("Tip", 2);
 	referenceComboBox->addItem("192", 3);
-	referenceComboBox->addItem("576", 3);
-	referenceComboBox->addItem("959", 3);
+	referenceComboBox->addItem("576", 4);
+	referenceComboBox->addItem("959", 5);
     referenceComboBox->setSelectedId(1, dontSendNotification);
 
     filterComboBox = new ComboBox("FilterComboBox");
@@ -413,9 +413,9 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     //addAndMakeVisible(activityViewComboBox);
 
     addAndMakeVisible(enableButton);
-    addAndMakeVisible(selectAllButton);
-    addAndMakeVisible(outputOnButton);
-    addAndMakeVisible(outputOffButton);
+    //addAndMakeVisible(selectAllButton);
+    //addAndMakeVisible(outputOnButton);
+    //addAndMakeVisible(outputOffButton);
     addAndMakeVisible(enableViewButton);
     addAndMakeVisible(lfpGainViewButton);
     addAndMakeVisible(apGainViewButton);
@@ -423,7 +423,7 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     addAndMakeVisible(annotationButton);
     //addAndMakeVisible(calibrationButton);
     //addAndMakeVisible(calibrationButton2);
-	addAndMakeVisible(calibrationButton3);
+	//addAndMakeVisible(calibrationButton3);
 
     
     infoLabel = new Label("INFO", "INFO");
@@ -450,7 +450,7 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     referenceLabel->setColour(Label::textColourId, Colours::grey);
     addAndMakeVisible(referenceLabel);
 
-    filterLabel = new Label("FILTER", "FILTER CUT (GLOBAL)");
+    filterLabel = new Label("FILTER", "AP FILTER CUT");
     filterLabel->setFont(Font("Small Text", 13, Font::plain));
     filterLabel->setBounds(396,280,200,20);
     filterLabel->setColour(Label::textColourId, Colours::grey);
@@ -460,7 +460,7 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
     outputLabel->setFont(Font("Small Text", 13, Font::plain));
     outputLabel->setBounds(396,330,200,20);
     outputLabel->setColour(Label::textColourId, Colours::grey);
-    addAndMakeVisible(outputLabel);
+    //addAndMakeVisible(outputLabel);
 
     annotationLabel = new Label("ANNOTATION", "Custom annotation");
     annotationLabel->setBounds(396,420,200,20);
@@ -494,13 +494,33 @@ NeuropixInterface::NeuropixInterface(NeuropixThread* t, NeuropixEditor* e) : thr
 
     std::cout << "Created Neuropix Interface" << std::endl;
 
-    wasReset = false;
+	updateInfoString();
 
-    //resetParameters();
-    updateInfoString();
-
-    //inputBuffer = thread->getDataBufferAddress();
     displayBuffer.setSize(768, 10000);
+
+	for (int i = 0; i < 384; i++)
+	{
+		if (i == 191)
+			channelStatus.set(i, -2);
+		else
+			channelStatus.set(i, 1);
+	}
+
+	for (int i = 384; i < 966; i++)
+	{
+		if (i == 575 || i == 959)
+			channelStatus.set(i, -2);
+		else
+			channelStatus.set(i, 0);
+	}
+
+	// default settings
+	for (int i = 0; i < 384; i++)
+	{
+		channelApGain.set(i, 3);
+		channelLfpGain.set(i, 2);
+		channelReference.set(i, 0);
+	}
 
 }
 
@@ -511,47 +531,26 @@ NeuropixInterface::~NeuropixInterface()
 
 void NeuropixInterface::updateInfoString()
 {
-    String hwVersion;
-    String bsVersion;
-    String apiVersion;
-    String probeType;
-	String serialNumber;
+	String probeInfo;
+	String hsInfo;
+	String bscInfo;
+	String bsInfo;
+	String apiInfo;
 
-	thread->getInfo(hwVersion, bsVersion, apiVersion, probeType, serialNumber);
-	String labelString = "Hardware version: ";
-	labelString += hwVersion;
-	labelString += "\n\nBasestation version: ";
-	labelString += bsVersion;
-	labelString += "\n\nAPI version: ";
-	labelString += apiVersion;
-	labelString += "\n\nProbe option: ";
-	labelString += probeType; // option
-	labelString += "\n\nProbe S/N: ";
-	labelString += serialNumber;
+	thread->getInfo(probeInfo, hsInfo, bscInfo, bsInfo, apiInfo);
+	String labelString = "Probe: ";
+	labelString += probeInfo;
+	labelString += "\n\nHeadstage: ";
+	labelString += hsInfo;
+	labelString += "\n\nBasestation: ";
+	labelString += bscInfo;
+	labelString += "\n\nFPGA: ";
+	labelString += bsInfo; // option
+	labelString += "\n\API: ";
+	labelString += apiInfo;
 
     infoLabel->setText(labelString, dontSendNotification);
 
-}
-
-void NeuropixInterface::resetParameters()
-{
-
-    std::cout << "Was reset? " << wasReset << std::endl;
-
-    if (!wasReset)
-    {
-        std::cout << "Resetting parameters... " << std::endl;
-
-        lfpGainComboBox->setSelectedId(3, dontSendNotification);
-        apGainComboBox->setSelectedId(4, dontSendNotification);
-        referenceComboBox->setSelectedId(1, dontSendNotification);
-        filterComboBox->setSelectedId(1, dontSendNotification);
-    }
-
-    wasReset = true;
-
-
-    
 }
 
 void NeuropixInterface::labelTextChanged(Label* label)
@@ -567,84 +566,44 @@ void NeuropixInterface::comboBoxChanged(ComboBox* comboBox)
 
     if (!editor->acquisitionIsActive)
     {
-        if (comboBox == apGainComboBox)
+        if (comboBox == apGainComboBox | comboBox == lfpGainComboBox)
         {
-            int gainSetting = comboBox->getSelectedId() - 1;
+			int gainSettingAp = apGainComboBox->getSelectedId() - 1;
+			int gainSettingLfp = lfpGainComboBox->getSelectedId() - 1;
 
-            //thread->setAllApGains(gainSetting);
+			thread->setAllGains(gainSettingAp, gainSettingLfp);
 
-            for (int i = 0; i < 966; i++)
-            {
-            //  if (channelSelectionState[i] == 1)
-            //  {
-                    channelApGain.set(i, gainSetting);
-
-            //      // 1. set AP gain for individual channels
-            //      // inform the thread of the new settings
-            //      if (channelStatus[i] == 1)
-            //          thread->setGain(getChannelForElectrode(i), gainSetting, channelLfpGain[i]);
-            //  }
-            }
-        }
-        else if (comboBox == lfpGainComboBox)
-        {
-            int gainSetting = comboBox->getSelectedId() - 1;
-
-            //thread->setAllLfpGains(gainSetting);
-
-            for (int i = 0; i < 966; i++)
-            {
-            //  if (channelSelectionState[i] == 1)
-            //  {
-                    channelLfpGain.set(i, gainSetting);
-
-            //      // 2. set lfp gain for individual channels
-            //      // inform the thread of the new settings
-            //      if (channelStatus[i] == 1)
-            //          thread->setGain(getChannelForElectrode(i), channelApGain[i], gainSetting);
-            //  }
-
-            }
+			for (int i = 0; i < 966; i++)
+			{
+				channelApGain.set(i, gainSettingAp);
+				channelLfpGain.set(i, gainSettingLfp);
+			}
         }
         else if (comboBox == referenceComboBox)
         {
-            String refSetting = comboBox->getText();
-            int refChannel;
 
-            if (refSetting.equalsIgnoreCase("Ext"))
-            {
-                refChannel = 0;
-            }
-            else {
-                refChannel = refSetting.getIntValue();
-            }
+			int refSetting = comboBox->getSelectedId() - 1;
+            
+			thread->setAllReferences(refSetting);
 
-           // thread->setAllReferences(getChannelForElectrode(refChannel), getConnectionForChannel(refChannel));
+			for (int i = 0; i < 966; i++)
+			{
+				channelReference.set(i, refSetting);
+			}
 
-            for (int i = 0; i < 966; i++)
-            {
-            //  if (channelSelectionState[i] == 1)
-            //  {
-                channelReference.set(i, comboBox->getSelectedId()-1);
-
-            //      // 3. set reference for individual channels
-            //      // inform the thread of the new settings
-            //      if (channelStatus[i] == 1)
-            //          thread->setReference(getChannelForElectrode(i), refSetting);
-            //  }
-
-            }
         }
         else if (comboBox == filterComboBox)
         {
             // inform the thread of the new settings
             int filterSetting = comboBox->getSelectedId() - 1;
 
-            // 0 = 300 Hz
-            // 1 = 500 Hz
-            // 3 = 1 kHz
+            // 0 = ON
+            // 1 = OFF
 
-            thread->setFilter(filterSetting);
+			if (filterSetting == 0)
+				thread->setFilter(true);
+			else
+				thread->setFilter(false);
         }
         
 
@@ -816,23 +775,6 @@ void NeuropixInterface::buttonClicked(Button* button)
 			thread->calibrateGains();
 			std::cout << "Calibration settings loaded." << std::endl;
 			calibrationButton2->setToggleState(true, dontSendNotification);
-            //FileChooser chooseFileReaderFile("Please select the directory containing the calibration data...",
-            //   File::getCurrentWorkingDirectory(),
-            //    "*");
-
-           // if (chooseFileReaderFile.browseForDirectory())
-           // {
-                // Use the selected file
-           //     File csvDirectory = chooseFileReaderFile.getResult();
-
-            //    thread->calibrateFromCsv(csvDirectory);
-
-                // lastFilePath = fileToRead.getParentDirectory();
-
-                // thread->setFile(fileToRead.getFullPathName());
-
-                // fileNameLabel->setText(fileToRead.getFileName(),false);
-           // }
         }
 	}
 	else if (button == calibrationButton3)
@@ -840,27 +782,6 @@ void NeuropixInterface::buttonClicked(Button* button)
 		if (!editor->acquisitionIsActive)
 		{
 
-			//std::cout << "Calibrating gain..." << std::endl;
-			//thread->calibrateGains();
-			//std::cout << "Calibration settings loaded." << std::endl;
-			///calibrationButton2->setToggleState(true, dontSendNotification);
-			//FileChooser chooseFileReaderFile("Please select the directory containing the calibration data...",
-			//   File::getCurrentWorkingDirectory(),
-			//    "*");
-
-			// if (chooseFileReaderFile.browseForDirectory())
-			// {
-			// Use the selected file
-			//     File csvDirectory = chooseFileReaderFile.getResult();
-
-			//    thread->calibrateFromCsv(csvDirectory);
-
-			// lastFilePath = fileToRead.getParentDirectory();
-
-			// thread->setFile(fileToRead.getFullPathName());
-
-			// fileNameLabel->setText(fileToRead.getFileName(),false);
-			// }
 			thread->calibrateFromCsv();
 			calibrationButton3->setToggleState(true, dontSendNotification);
 			std::cout << "Done." << std::endl;

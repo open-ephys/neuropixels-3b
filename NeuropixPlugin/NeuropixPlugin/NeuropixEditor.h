@@ -227,8 +227,6 @@ namespace Neuropix {
 		int getChannelForElectrode(int);
 		int getConnectionForChannel(int);
 
-		void resetParameters();
-		bool wasReset;
 	};
 
 	class Annotation

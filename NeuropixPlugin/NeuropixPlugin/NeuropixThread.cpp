@@ -168,7 +168,7 @@ void NeuropixThread::openConnection()
 
 	calibrateFromCsv(); // run the gain calibration
 
-	setAllGains(3, 2); // 500x, 250x
+	setAllGains(3, 2); // 500x AP, 250x LFP
 
 	for (int i = 0; i < 384; i++) // enable electrodes
 	{
@@ -178,7 +178,7 @@ void NeuropixThread::openConnection()
 		}
 	}
 
-	setAllReferences(0, 0);
+	setAllReferences(0);
 
 	neuropix.writeProbeConfiguration(slotID, port, false);
 
@@ -197,13 +197,55 @@ bool NeuropixThread::foundInputSource()
     return baseStationAvailable;
 }
 
-void NeuropixThread::getInfo(String& hwVersion, String& bsVersion, String& apiVersion, String& asicInfo, String& serialNumber)
+void NeuropixThread::getInfo(String& probeInfo, String& hsInfo, String& bscInfo, String& bsInfo, String& apiInfo)
 {
-	//hwVersion = String(hw_version.major) + "." + String(hw_version.minor);
-	//bsVersion = String(bs_version) + "." + String(bs_revision);
-	//apiVersion = String(vn.major) + "." + String(vn.minor);
-	//asicInfo = String(asicId.probeType+1);
-	//serialNumber = String(asicId.serialNumber);
+
+	NP_ErrorCode errorCode;
+
+	uint64_t probe_id;
+	uint64_t hs_id;
+	uint64_t bsc_id;
+	char* probe_part_number;
+	char* hs_part_number;
+	char* bsc_part_number;
+	unsigned char flex_version_major;
+	unsigned char flex_version_minor;
+	unsigned char hs_version_major;
+	unsigned char hs_version_minor;
+	unsigned char bsc_version_major;
+	unsigned char bsc_version_minor;
+	unsigned char api_version_major;
+	unsigned char api_version_minor;
+	unsigned char bsc_fpga_version_major;
+	unsigned char bsc_fpga_version_minor;
+	unsigned char bs_fpga_version_major;
+	unsigned char bs_fpga_version_minor;
+
+
+	errorCode = neuropix.readId(slotID, port, probe_id);
+	errorCode = neuropix.readProbePN(slotID, port, probe_part_number);
+	errorCode = neuropix.getFlexVersion(slotID, port, flex_version_major, flex_version_minor);
+
+	errorCode = neuropix.readHSSN(slotID, port, hs_id);
+	errorCode = neuropix.readHSPN(slotID, port, hs_part_number);
+	errorCode = neuropix.getHSVersion(slotID, port, hs_version_major, hs_version_minor);
+
+	errorCode = neuropix.readBSCSN(slotID, bsc_id);
+	errorCode = neuropix.readBSCPN(slotID, bsc_part_number);
+	errorCode = neuropix.getBSCVersion(slotID, bsc_version_major, bsc_version_major);
+
+	errorCode = neuropix.getBSCBootVersion(slotID, bsc_fpga_version_major, bsc_fpga_version_minor);
+	errorCode = neuropix.getBSBootVersion(slotID, bs_fpga_version_major, bs_fpga_version_major);
+
+	errorCode = neuropix.getAPIVersion(api_version_major, api_version_minor);
+
+	probeInfo = "S/N" + String(probe_id) + ", part #" + String(probe_part_number) + ", flex v" + String(flex_version_minor) + "." + String(flex_version_minor);
+	hsInfo = "S/N" + String(hs_id) + ", part #" + String(hs_part_number) + ", v" + String(hs_version_major) + "." + String(hs_version_minor);
+	bscInfo = "S/N" + String(bsc_id) + ", part #" + String(bsc_part_number) + ", v" + String(bsc_version_major) + "." + String(bsc_version_major) +
+		", firmware v " + String(bsc_fpga_version_major) + "." + String(bsc_fpga_version_minor);
+	bsInfo = "firmware v" + String(bs_fpga_version_major) + "." + String(bs_fpga_version_minor);
+	apiInfo = "v" + String(api_version_major) + "." + String(api_version_minor);
+
 }
 
 /** Initializes data transfer.*/
@@ -372,22 +414,35 @@ void NeuropixThread::selectElectrode(int chNum, int connection, bool transmit)
 
 }
 
-void NeuropixThread::setAllReferences(int refChan, int bankForReference)
+void NeuropixThread::setAllReferences(int refId)
 {
-    
-    int refSetting = refs.indexOf(refChan);
-
-    int i; 
+ 
 	NP_ErrorCode ec;
-	ChannelReference reference = EXT_REF; // EXT_REF, TIP_REF, INT_REF 
-	unsigned char intRefElectrodeBank = 0; // 0 = 192, 1 = 576, 2 = 960
+	ChannelReference reference;
+	unsigned char intRefElectrodeBank;
+
+	if (refId == 0) // external reference
+	{
+		reference = EXT_REF;
+		intRefElectrodeBank = 0;
+	}
+	else if (refId == 1) // tip reference
+	{
+		reference = TIP_REF;
+		intRefElectrodeBank = 0;
+	}
+	else if (refId > 1) // internal reference
+	{
+		reference = INT_REF;
+		intRefElectrodeBank = refId - 2;
+	}
 
 	for (int i = 0; i < 384; i++)
 	{
 		ec = neuropix.setReference(slotID, port, i, reference, intRefElectrodeBank);
 	}
 
-	std::cout << "Set all references to " << refSetting << "; error code = " << ec << std::endl;
+	std::cout << "Set all references to " << refId << "; error code = " << ec << std::endl;
 }
 
 void NeuropixThread::setAllGains(unsigned char apGain, unsigned char lfpGain)

@@ -60,13 +60,13 @@ namespace Neuropix {
 	    bool foundInputSource();
 
 		/** Returns version info for hardware and API.*/
-		void getInfo(String& hwVersion, String& bsVersion, String& apiVersion, String& asicInfo, String& serialNumber);
+		void getInfo(String& probeInfo, String& hsInfo, String& bscInfo, String& bsInfo, String& apiInfo);
 
 	    /** Initializes data transfer.*/
-	    bool startAcquisition();
+	    bool startAcquisition() override;
 
 	    /** Stops data transfer.*/
-	    bool stopAcquisition();
+	    bool stopAcquisition() override;
 
 		// DataThread Methods
 
@@ -97,7 +97,7 @@ namespace Neuropix {
 		void selectElectrode(int chNum, int connection, bool transmit);
 
 		/** Selects which reference is used for each channel. */
-		void setAllReferences(int refSetting, int bankForReference);
+		void setAllReferences(int refId);
 
 		/** Sets the gain for each channel. */
 		void setAllGains(unsigned char apGain, unsigned char lfpGain);
