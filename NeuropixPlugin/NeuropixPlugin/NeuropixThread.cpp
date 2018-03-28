@@ -53,14 +53,14 @@ NeuropixThread::NeuropixThread(SourceNode* sn) : DataThread(sn), baseStationAvai
         outputOn.add(true);
     }
 
-    gains.add(50);
-    gains.add(125);
-    gains.add(250);
-    gains.add(500);
-    gains.add(1000);
-    gains.add(1500);
-    gains.add(2000);
-    gains.add(3000);
+    gains.add(50.0f);
+    gains.add(125.0f);
+    gains.add(250.0f);
+    gains.add(500.0f);
+    gains.add(1000.0f);
+    gains.add(1500.0f);
+    gains.add(2000.0f);
+    gains.add(3000.0f);
 
     refs.add(0);
     refs.add(1);
@@ -441,6 +441,8 @@ void NeuropixThread::setAllReferences(int refId)
 		ec = neuropix.setReference(slotID, port, i, reference, intRefElectrodeBank);
 	}
 
+	neuropix.writeProbeConfiguration(slotID, port, false);
+
 	std::cout << "Set all references to " << refId << "; error code = " << ec << std::endl;
 }
 
@@ -466,7 +468,7 @@ void NeuropixThread::setFilter(bool filterState)
 	NP_ErrorCode ec;
 
 	for (int i = 0; i < 384; i++)
-	  ec = neuropix.setAPCornerFrequency(slotID, port, i, filterState);
+	  ec = neuropix.setAPCornerFrequency(slotID, port, i, !filterState); // true = disabled, false = enabled
 
 	neuropix.writeProbeConfiguration(slotID, port, false);
 
@@ -591,10 +593,10 @@ bool NeuropixThread::updateBuffer()
 
 				for (int j = 0; j < 384; j++)
 				{
-					data[j] = packetBuffer[packetNum].apData[i][j] * 1.2 / 1024 * 1000.0f; //- 0.6) / gains[apGains[j]]; // *-1000000.0f; // convert to microvolts
+					data[j] = float(packetBuffer[packetNum].apData[i][j]) * 1.2f / 1024.0f * 1000000.0f / gains[apGains[j]]; // *-1000000.0f; // convert to microvolts
 
 					if (i == 0 && sendLfp)
-						data2[j] = packetBuffer[packetNum].lfpData[j] * 1.2 / 1024 * 1000.0f; // -0.6) / gains[lfpGains[j]]; // *-1000000.0f; // convert to microvolts
+						data2[j] = float(packetBuffer[packetNum].lfpData[j]) * 1.2f / 1024.0f * 1000000.0f / gains[lfpGains[j]]; // *-1000000.0f; // convert to microvolts
 				}
 
 				sourceBuffers[0]->addToBuffer(data, &timestampAp, &eventCode, 1);
