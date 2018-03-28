@@ -205,9 +205,9 @@ void NeuropixThread::getInfo(String& probeInfo, String& hsInfo, String& bscInfo,
 	uint64_t probe_id;
 	uint64_t hs_id;
 	uint64_t bsc_id;
-	char* probe_part_number;
-	char* hs_part_number;
-	char* bsc_part_number;
+	char probe_part_number[50];
+	char hs_part_number[50];
+	char bsc_part_number[50];
 	unsigned char flex_version_major;
 	unsigned char flex_version_minor;
 	unsigned char hs_version_major;
@@ -220,7 +220,6 @@ void NeuropixThread::getInfo(String& probeInfo, String& hsInfo, String& bscInfo,
 	unsigned char bsc_fpga_version_minor;
 	unsigned char bs_fpga_version_major;
 	unsigned char bs_fpga_version_minor;
-
 
 	errorCode = neuropix.readId(slotID, port, probe_id);
 	errorCode = neuropix.readProbePN(slotID, port, probe_part_number);
@@ -235,15 +234,15 @@ void NeuropixThread::getInfo(String& probeInfo, String& hsInfo, String& bscInfo,
 	errorCode = neuropix.getBSCVersion(slotID, bsc_version_major, bsc_version_major);
 
 	errorCode = neuropix.getBSCBootVersion(slotID, bsc_fpga_version_major, bsc_fpga_version_minor);
-	errorCode = neuropix.getBSBootVersion(slotID, bs_fpga_version_major, bs_fpga_version_major);
+	errorCode = neuropix.getBSBootVersion(slotID, bs_fpga_version_major, bs_fpga_version_minor);
 
 	errorCode = neuropix.getAPIVersion(api_version_major, api_version_minor);
 
-	probeInfo = "S/N" + String(probe_id) + ", part #" + String(probe_part_number) + ", flex v" + String(flex_version_minor) + "." + String(flex_version_minor);
-	hsInfo = "S/N" + String(hs_id) + ", part #" + String(hs_part_number) + ", v" + String(hs_version_major) + "." + String(hs_version_minor);
-	bscInfo = "S/N" + String(bsc_id) + ", part #" + String(bsc_part_number) + ", v" + String(bsc_version_major) + "." + String(bsc_version_major) +
-		", firmware v " + String(bsc_fpga_version_major) + "." + String(bsc_fpga_version_minor);
-	bsInfo = "firmware v" + String(bs_fpga_version_major) + "." + String(bs_fpga_version_minor);
+	probeInfo = "SN" + String(probe_id) + "\n" + String(probe_part_number) + ", v" + String(flex_version_minor) + "." + String(flex_version_minor) + "\n";
+	hsInfo = "SN" + String(hs_id) + "\n" + String(hs_part_number) + ", v" + String(hs_version_major) + "." + String(hs_version_minor) + "\n";
+	bscInfo = "SN" + String(bsc_id) + "\n" + String(bsc_part_number) + ", v" + String(bsc_version_major) + "." + String(bsc_version_major)
+		+ ", firmware v" + String(bsc_fpga_version_major) + "." + String(bsc_fpga_version_minor) + "\n";
+	bsInfo = "firmware v" + String(bs_fpga_version_major) + "." + String(bs_fpga_version_minor) + "\n";
 	apiInfo = "v" + String(api_version_major) + "." + String(api_version_minor);
 
 }
